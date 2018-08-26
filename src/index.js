@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
-import R from 'ramda'
+import * as R from 'ramda'
 import uid from 'uid'
 import './styles.css'
 

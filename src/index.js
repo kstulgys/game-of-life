@@ -11,21 +11,19 @@ const getGrid = () => {
 }
 
 const genNumber = () => {
-  const rand = Math.random()
-  const num = Math.floor(rand * 4)
-  return num
+  return Math.floor(Math.random() * 4)
 }
 const Box = ({ color }) => (
-  <div className={`card ${color}`} style={{ width: '0.5rem', height: '0.5rem' }} />
+  <div className={`card ${color}`} style={{ width: 8, height: 8 }} />
 )
 
 const GridWrapper = children => (
-  <div className="d-flex flex-wrap" style={{ width: `${8 * gridCols}px` }}>
-    {children}
+  <div style={{ width: `${8 * gridCols}px`, maxWidth: `${8 * gridCols}px` }}>
+    <div className="d-flex flex-wrap shadow-lg">{children}</div>
   </div>
 )
 
-const mapRows = R.map(col => <Box color={col ? 'bg-info' : 'bg-light'} />)
+const mapRows = R.map(col => <Box color={col ? 'bg-danger' : 'bg-light'} />)
 const GridItems = R.map(mapRows)
 const GetGridArray = R.prop('grid')
 
@@ -49,7 +47,7 @@ class App extends Component {
   }
 
   playButton = () => {
-    this.intervalId = setInterval(this.play, 100)
+    this.intervalId = setInterval(this.play, 50)
   }
 
   stopButton = () => {
@@ -57,15 +55,15 @@ class App extends Component {
   }
 
   // rules:
-  // if null && count 2 || 3 => true
-  // if true && count < 3 => false
+  //   Any live cell with fewer than two live neighbors dies, as if by under population.
+  // Any live cell with two or three live neighbors lives on to the next generation.
+  // Any live cell with more than three live neighbors dies, as if by overpopulation.
+  // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
 
   play = () => {
-    console.log('play')
-    let cg = [...this.state.grid]
-    const conditions = (col, cidx, ridx, row) => {
+    const cg = [...this.state.grid]
+    const conditions = (col, cidx, ridx, cg) => {
       let count = 0
-
       cg[ridx - 1] && cg[ridx - 1][cidx] && count++
       cg[ridx - 1] && cg[ridx - 1][cidx + 1] && count++
       cg[ridx] && cg[ridx][cidx + 1] && count++
@@ -74,31 +72,14 @@ class App extends Component {
       cg[ridx + 1] && cg[ridx + 1][cidx - 1] && count++
       cg[ridx] && cg[ridx][cidx - 1] && count++
       cg[ridx - 1] && cg[ridx - 1][cidx - 1] && count++
-
-      const born = count === 2 || count === 3
-      // const dies = null
-      // const newVal =
-      return born ? true : null
-      // console.log(count)
-      // console.log('count', cgg[ridx][cidx])
-      // const topr = cidx && ridx && cg[ridx - 1][cidx + 1]
-      // const right = cidx && ridx && cg[ridx][cidx + 1]
-      // const rightb = cidx && ridx && cg[ridx + 1][cidx + 1]
-      // const bottom = cidx && ridx && cg[ridx + 1][cidx]
-      // const bottoml = cidx && ridx && cg[ridx + 1][cidx - 1]
-      // const left = cidx && ridx && cg[ridx][cidx - 1]
-      // const leftt = cidx && ridx && cg[ridx - 1][cidx - 1]
-      // const suroundings = [top, topr, right, rightb, bottom, bottoml, left, leftt]
-      // console.log('cond', suroundings)
-      // R.map(x => x && count++, suroundings)
+      const dies = col && 2 > count > 3
+      const lives = (col && (count === 2 || count === 3)) || (!col && count === 3)
+      return dies ? null : lives ? true : null
     }
-    // conditions(cidx, ridx, cg)
     const mapIndexed = R.addIndex(R.map)
-
-    let columns = (row, ridx) =>
-      mapIndexed((col, cidx) => conditions(col, cidx, ridx, row), row)
-
-    let nextGrid = mapIndexed(columns, cg)
+    const columns = (row, ridx) =>
+      mapIndexed((col, cidx) => conditions(col, cidx, ridx, cg), row)
+    const nextGrid = mapIndexed(columns, cg)
     this.setState({ grid: nextGrid })
   }
 

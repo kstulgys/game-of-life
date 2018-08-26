@@ -1,21 +1,15 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import * as R from 'ramda'
-import uid from 'uid'
 import './styles.css'
-
-const gridRows = 40
-const gridCols = 60
-
-const defaultGrid = R.map(row => Array(gridCols).fill(null), Array(gridRows))
 
 const Box = ({ color }) => (
   <div className={`card ${color}`} style={{ width: 8, height: 8 }} />
 )
 
-const GridWrapper = children => (
-  <div style={{ minWidth: `${8 * gridCols}px`, maxWidth: `${8 * gridCols}px` }}>
-    <div className="d-flex flex-wrap shadow-lg">{children}</div>
+const GridWrapper = props => (
+  <div style={{ minWidth: `${8 * props.cols}px`, maxWidth: `${8 * props.cols}px` }}>
+    <div className="d-flex flex-wrap shadow-lg">{props.layout}</div>
   </div>
 )
 
@@ -25,14 +19,29 @@ const gridArray = R.prop('grid')
 
 const GridLayout = R.pipe(
   gridArray,
-  gridItems,
-  GridWrapper
+  gridItems
 )
 
 class App extends Component {
   state = {
-    grid: defaultGrid
+    rows: 50,
+    columns: 80,
+    generation: 0,
+    grid: null
   }
+
+  dGrid = () => {
+    const defaultGrid = R.map(
+      row => new Array(this.state.columns).fill(null),
+      new Array(this.state.rows)
+    )
+    this.setState({ grid: defaultGrid })
+  }
+
+  componentWillMount() {
+    this.dGrid()
+  }
+
   seed = () => {
     const grid = [...this.state.grid]
     const mapRows = R.map(col => (Math.floor(Math.random() * 4) === 1 ? true : null))
@@ -74,19 +83,35 @@ class App extends Component {
     const columns = (row, ridx) =>
       mapIndexed((col, cidx) => conditions(col, cidx, ridx, cg), row)
     const nextGrid = mapIndexed(columns, cg)
-    this.setState({ grid: nextGrid })
+    this.setState({ grid: nextGrid, generation: this.state.generation + 1 })
   }
 
   render() {
     return (
-      <div className="App">
-        <h1>Game Of Life</h1>
-        <button onClick={this.seed}>Seed</button>
-        <button onClick={this.playButton}>Play</button>
-        <button onClick={this.stopButton}>Stop</button>
+      <div
+        className="d-flex flex-column align-items-center justify-content-center"
+        style={{ height: '80vh' }}
+      >
+        <h1 className="mt-4">Game Of Life</h1>
+        <p>Generation: {this.state.generation}</p>
+
+        <div className="pb-3 d-flex align-items-center">
+          <button onClick={this.seed}>Seed</button>
+          <button onClick={this.playButton}>Play</button>
+          <button onClick={this.stopButton}>Stop</button>
+          <select class="custom-select">
+            <option selected>40x60</option>
+            <option value="1">50x80</option>
+            <option value="2">60x120</option>
+          </select>
+        </div>
 
         <div className="d-flex justify-content-center">
-          <GridLayout grid={this.state.grid} />
+          <GridWrapper
+            cols={this.state.columns}
+            rows={this.state.rows}
+            layout={<GridLayout grid={this.state.grid} />}
+          />
         </div>
       </div>
     )

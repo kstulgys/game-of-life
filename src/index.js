@@ -1,47 +1,41 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import R from 'ramda'
+import uid from 'uid'
 import './styles.css'
 
 const gridRows = 40
 const gridCols = 60
 
-const getGrid = () => {
-  return R.map(row => Array(gridCols).fill(null), Array(gridRows))
-}
+const defaultGrid = R.map(row => Array(gridCols).fill(null), Array(gridRows))
 
-const genNumber = () => {
-  return Math.floor(Math.random() * 4)
-}
 const Box = ({ color }) => (
   <div className={`card ${color}`} style={{ width: 8, height: 8 }} />
 )
 
 const GridWrapper = children => (
-  <div style={{ width: `${8 * gridCols}px`, maxWidth: `${8 * gridCols}px` }}>
+  <div style={{ minWidth: `${8 * gridCols}px`, maxWidth: `${8 * gridCols}px` }}>
     <div className="d-flex flex-wrap shadow-lg">{children}</div>
   </div>
 )
 
 const mapRows = R.map(col => <Box color={col ? 'bg-danger' : 'bg-light'} />)
-const GridItems = R.map(mapRows)
-const GetGridArray = R.prop('grid')
+const gridItems = R.map(mapRows)
+const gridArray = R.prop('grid')
 
 const GridLayout = R.pipe(
-  GetGridArray,
-  GridItems,
+  gridArray,
+  gridItems,
   GridWrapper
 )
 
-const getMutation = (col, cidx, ridx, cg) => {}
-
 class App extends Component {
   state = {
-    grid: getGrid()
+    grid: defaultGrid
   }
   seed = () => {
     const grid = [...this.state.grid]
-    const mapRows = R.map(col => (genNumber() === 1 ? true : null))
+    const mapRows = R.map(col => (Math.floor(Math.random() * 4) === 1 ? true : null))
     const seedGrid = R.map(mapRows, grid)
     this.setState({ grid: seedGrid })
   }

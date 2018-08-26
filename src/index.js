@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom'
 import R from 'ramda'
 import './styles.css'
 
-const gridRows = 20
-const gridCols = 30
+const gridRows = 40
+const gridCols = 60
 
 const getGrid = () => {
   return R.map(row => Array(gridCols).fill(null), Array(gridRows))
@@ -16,16 +16,16 @@ const genNumber = () => {
   return num
 }
 const Box = ({ color }) => (
-  <div className={`card ${color}`} style={{ width: '1rem', height: '1rem' }} />
+  <div className={`card ${color}`} style={{ width: '0.5rem', height: '0.5rem' }} />
 )
 
 const GridWrapper = children => (
-  <div className="d-flex flex-wrap" style={{ width: `${16 * gridCols}px` }}>
+  <div className="d-flex flex-wrap" style={{ width: `${8 * gridCols}px` }}>
     {children}
   </div>
 )
 
-const mapRows = R.map(col => <Box color={col ? 'bg-primary' : 'bg-warning'} />)
+const mapRows = R.map(col => <Box color={col ? 'bg-info' : 'bg-light'} />)
 const GridItems = R.map(mapRows)
 const GetGridArray = R.prop('grid')
 

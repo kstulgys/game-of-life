@@ -30,16 +30,12 @@ class App extends Component {
     grid: null
   }
 
-  dGrid = () => {
+  componentWillMount() {
     const defaultGrid = R.map(
       row => new Array(this.state.columns).fill(null),
       new Array(this.state.rows)
     )
     this.setState({ grid: defaultGrid })
-  }
-
-  componentWillMount() {
-    this.dGrid()
   }
 
   seed = () => {

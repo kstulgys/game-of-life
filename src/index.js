@@ -3,29 +3,6 @@ import ReactDOM from 'react-dom'
 import * as R from 'ramda'
 import './styles.css'
 
-const Box = ({ color }) => (
-  <div className={`card ${color}`} style={{ width: 8, height: 8 }} />
-)
-
-const GridWrapper = ({ cols, layout }) => (
-  <div
-    style={{
-      width: `${8 * cols}px`
-    }}
-  >
-    <div className="d-flex flex-wrap shadow-lg">{layout}</div>
-  </div>
-)
-
-const mapRows = R.map(col => <Box color={col ? 'bg-danger' : 'bg-light'} />)
-const gridItems = R.map(mapRows)
-const gridArray = R.prop('grid')
-
-const GridLayout = R.pipe(
-  gridArray,
-  gridItems
-)
-
 class App extends Component {
   state = {
     rows: 30,
@@ -70,6 +47,11 @@ class App extends Component {
     const cg = [...this.state.grid]
     const conditions = (col, cidx, ridx, cg) => {
       let count = 0
+      // rules:
+      // Any live cell with fewer than two live neighbors dies, as if by under population.
+      // Any live cell with two or three live neighbors lives on to the next generation.
+      // Any live cell with more than three live neighbors dies, as if by overpopulation.
+      // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
       cg[ridx - 1] && cg[ridx - 1][cidx] && count++
       cg[ridx - 1] && cg[ridx - 1][cidx + 1] && count++
       cg[ridx] && cg[ridx][cidx + 1] && count++
@@ -78,12 +60,6 @@ class App extends Component {
       cg[ridx + 1] && cg[ridx + 1][cidx - 1] && count++
       cg[ridx] && cg[ridx][cidx - 1] && count++
       cg[ridx - 1] && cg[ridx - 1][cidx - 1] && count++
-
-      // rules:
-      // Any live cell with fewer than two live neighbors dies, as if by under population.
-      // Any live cell with two or three live neighbors lives on to the next generation.
-      // Any live cell with more than three live neighbors dies, as if by overpopulation.
-      // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
 
       // const underPopulation = col && count < 3
       // const overPopulation = col && count > 3
@@ -153,6 +129,29 @@ class App extends Component {
     )
   }
 }
+
+const Box = ({ color }) => (
+  <div className={`card ${color}`} style={{ width: 8, height: 8 }} />
+)
+
+const GridWrapper = ({ cols, layout }) => (
+  <div
+    style={{
+      width: `${8 * cols}px`
+    }}
+  >
+    <div className="d-flex flex-wrap shadow-lg">{layout}</div>
+  </div>
+)
+
+const mapRows = R.map(col => <Box color={col ? 'bg-danger' : 'bg-light'} />)
+const gridItems = R.map(mapRows)
+const gridArray = R.prop('grid')
+
+const GridLayout = R.pipe(
+  gridArray,
+  gridItems
+)
 
 const rootElement = document.getElementById('root')
 ReactDOM.render(<App />, rootElement)

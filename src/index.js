@@ -1,166 +1,158 @@
-import React, { Component } from "react"
-import ReactDOM from "react-dom"
-import * as R from "ramda"
-import "./styles.css"
-// <option defaultValue={{ rows: 50, cols: 80 }}>30x50</option>
-// 	<option value={{ rows: 50, cols: 80 }}>50x80</option>
-// 	<option value={{ rows: 80, cols: 120 }}>80x120</option>
-const options = [
-	{ id: 1, rc: { rows: 30, columns: 50 }, text: "30x50" },
-	{ id: 2, rc: { rows: 50, columns: 80 }, text: "50x80" },
-	{ id: 3, rc: { rows: 80, columns: 130 }, text: "80x130" }
-]
+import React, { Component } from 'react'
+import ReactDOM from 'react-dom'
+import * as R from 'ramda'
+import './styles.css'
 
 const Box = ({ color }) => (
-	<div className={`card ${color}`} style={{ width: 8, height: 8 }} />
+  <div className={`card ${color}`} style={{ width: 8, height: 8 }} />
 )
 
-const GridWrapper = props => (
-	<div
-		style={{
-			minWidth: `${8 * props.cols}px`,
-			maxWidth: `${8 * props.cols}px`
-		}}>
-		<div className="d-flex flex-wrap shadow-lg">{props.layout}</div>
-	</div>
+const GridWrapper = ({ cols, layout }) => (
+  <div
+    style={{
+      width: `${8 * cols}px`
+    }}
+  >
+    <div className="d-flex flex-wrap shadow-lg">{layout}</div>
+  </div>
 )
 
-const mapRows = R.map(col => <Box color={col ? "bg-danger" : "bg-light"} />)
+const mapRows = R.map(col => <Box color={col ? 'bg-danger' : 'bg-light'} />)
 const gridItems = R.map(mapRows)
-const gridArray = R.prop("grid")
+const gridArray = R.prop('grid')
 
 const GridLayout = R.pipe(
-	gridArray,
-	gridItems
+  gridArray,
+  gridItems
 )
 
 class App extends Component {
-	state = {
-		rows: 30,
-		columns: 50,
-		generation: 0,
-		grid: []
-	}
+  state = {
+    rows: 30,
+    cols: 50,
+    generation: 0,
+    grid: []
+  }
 
-	componentWillMount() {
-		const defaultGrid = R.map(
-			row => Array(this.state.columns).fill(null),
-			Array(this.state.rows)
-		)
-		const mapRows = R.map(
-			col => (Math.floor(Math.random() * 10) === 1 ? true : null)
-		)
-		const seedGrid = R.map(mapRows, defaultGrid)
-		this.setState({ grid: seedGrid })
-	}
-	componentDidUpdate(prevProps, prevState) {
-		const defaultGrid = R.map(
-			row => Array(this.state.columns).fill(null),
-			Array(this.state.rows)
-		)
+  componentDidMount() {
+    this.setAndSeedGrid()
+  }
 
-		this.state.rows != prevState.rows &&
-			this.setState({
-				grid: defaultGrid
-			})
-	}
+  componentDidUpdate(nextProps, nextState) {
+    this.state.cols !== nextState.cols && this.setAndSeedGrid()
+  }
 
-	seed = () => {
-		this.setState({ generation: 0 })
-		const grid = [...this.state.grid]
-		const mapRows = R.map(
-			col => (Math.floor(Math.random() * 10) === 1 ? true : null)
-		)
-		const seedGrid = R.map(mapRows, grid)
-		this.setState({ grid: seedGrid, generation: 0 })
-	}
+  setAndSeedGrid = async () => {
+    await this.setGrid()
+    await this.seedGrid()
+  }
 
-	playButton = () => {
-		this.intervalId = setInterval(this.play, 50)
-	}
+  setGrid = () => {
+    const grid = R.map(row => Array(this.state.cols).fill(null), Array(this.state.rows))
+    this.setState({ grid })
+  }
 
-	stopButton = () => {
-		clearInterval(this.intervalId)
-	}
+  seedGrid = () => {
+    const mapRows = R.map(col => (Math.floor(Math.random() * 10) === 1 ? true : null))
+    const grid = R.map(mapRows, this.state.grid)
+    this.setState({ grid, generation: 0 })
+  }
 
-	play = () => {
-		const cg = [...this.state.grid]
-		const conditions = (col, cidx, ridx, cg) => {
-			let count = 0
-			cg[ridx - 1] && cg[ridx - 1][cidx] && count++
-			cg[ridx - 1] && cg[ridx - 1][cidx + 1] && count++
-			cg[ridx] && cg[ridx][cidx + 1] && count++
-			cg[ridx + 1] && cg[ridx + 1][cidx + 1] && count++
-			cg[ridx + 1] && cg[ridx + 1][cidx] && count++
-			cg[ridx + 1] && cg[ridx + 1][cidx - 1] && count++
-			cg[ridx] && cg[ridx][cidx - 1] && count++
-			cg[ridx - 1] && cg[ridx - 1][cidx - 1] && count++
+  playButton = () => {
+    this.intervalId = setInterval(this.play, 50)
+  }
 
-			// rules:
-			// Any live cell with fewer than two live neighbors dies, as if by under population.
-			// Any live cell with two or three live neighbors lives on to the next generation.
-			// Any live cell with more than three live neighbors dies, as if by overpopulation.
-			// Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+  stopButton = () => {
+    clearInterval(this.intervalId)
+  }
 
-			// const underPopulation = col && count < 3
-			// const overPopulation = col && count > 3
-			// const optimalPopulation = col && (count === 2 || count === 3)
-			// const reproduction = !col && count === 3
-			// const lives = optimalPopulation || reproduction
-			return count === 3 || (col && count === 2)
-		}
-		const mapIndexed = R.addIndex(R.map)
-		const columns = (row, ridx) =>
-			mapIndexed((col, cidx) => conditions(col, cidx, ridx, cg), row)
-		const nextGrid = mapIndexed(columns, cg)
-		this.setState(({ grid, generation }) => ({
-			grid: nextGrid,
-			generation: generation + 1
-		}))
-	}
+  play = () => {
+    const cg = [...this.state.grid]
+    const conditions = (col, cidx, ridx, cg) => {
+      let count = 0
+      cg[ridx - 1] && cg[ridx - 1][cidx] && count++
+      cg[ridx - 1] && cg[ridx - 1][cidx + 1] && count++
+      cg[ridx] && cg[ridx][cidx + 1] && count++
+      cg[ridx + 1] && cg[ridx + 1][cidx + 1] && count++
+      cg[ridx + 1] && cg[ridx + 1][cidx] && count++
+      cg[ridx + 1] && cg[ridx + 1][cidx - 1] && count++
+      cg[ridx] && cg[ridx][cidx - 1] && count++
+      cg[ridx - 1] && cg[ridx - 1][cidx - 1] && count++
 
-	changeGrid = ({ target: { value } }) => {
-		const filtered = R.filter(i => i.id == value)(options)
-		// const a = filtered[0].rc
-		// console.log(a)
-		this.setState(filtered[0].rc)
-	}
-	render() {
-		// console.log(this.state.grid)
-		return (
-			<div
-				className="d-flex flex-column align-items-center justify-content-center"
-				style={{ height: "80vh" }}>
-				<h1 className="mt-4">Game Of Life</h1>
-				<p>Generation: {this.state.generation}</p>
+      // rules:
+      // Any live cell with fewer than two live neighbors dies, as if by under population.
+      // Any live cell with two or three live neighbors lives on to the next generation.
+      // Any live cell with more than three live neighbors dies, as if by overpopulation.
+      // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
 
-				<div className="pb-3 d-flex align-items-center">
-					<button onClick={this.seed}>Seed</button>
-					<button onClick={this.playButton}>Play</button>
-					<button onClick={this.stopButton}>Stop</button>
-					<select className="custom-select" onChange={this.changeGrid}>
-						{R.map(
-							({ text, id }) => (
-								<option key={id} value={id}>
-									{text}
-								</option>
-							),
-							options
-						)}
-					</select>
-				</div>
+      // const underPopulation = col && count < 3
+      // const overPopulation = col && count > 3
+      // const optimalPopulation = col && (count === 2 || count === 3)
+      // const reproduction = !col && count === 3
+      // const lives = optimalPopulation || reproduction
+      // return lives ? lives : null
+      return count === 3 || (col && count === 2)
+    }
+    const mapIndexed = R.addIndex(R.map)
+    const columns = (row, ridx) =>
+      mapIndexed((col, cidx) => conditions(col, cidx, ridx, cg), row)
+    const nextGrid = mapIndexed(columns, cg)
+    this.setState({
+      grid: nextGrid,
+      generation: this.state.generation + 1
+    })
+  }
 
-				<div className="d-flex justify-content-center">
-					<GridWrapper
-						cols={this.state.columns}
-						rows={this.state.rows}
-						layout={<GridLayout grid={this.state.grid} />}
-					/>
-				</div>
-			</div>
-		)
-	}
+  changeGrid = ({ target: { value } }) => {
+    console.log(value)
+    switch (value) {
+      case '1':
+        this.setState({ rows: 30, cols: 50 })
+        break
+      case '2':
+        this.setState({ rows: 50, cols: 70 })
+        break
+      case '3':
+        this.setState({ rows: 70, cols: 100 })
+        break
+      default:
+        this.setState({ rows: 30, cols: 50 })
+        break
+    }
+  }
+
+  render() {
+    // console.log(this.state)
+    return (
+      <div
+        className="d-flex flex-column align-items-center justify-content-center"
+        style={{ height: '80vh' }}
+      >
+        <h1 className="mt-4">Game Of Life</h1>
+        <p>Generation: {this.state.generation}</p>
+
+        <div className="pb-3 d-flex align-items-center">
+          <button onClick={this.seedGrid}>Seed</button>
+          <button onClick={this.playButton}>Play</button>
+          <button onClick={this.stopButton}>Stop</button>
+          <select className="custom-select" onChange={this.changeGrid}>
+            <option value="1">30x50</option>
+            <option value="2">50x70</option>
+            <option value="3">70x100</option>
+          </select>
+        </div>
+
+        <div className="d-flex justify-content-center">
+          <GridWrapper
+            cols={this.state.cols}
+            rows={this.state.rows}
+            layout={<GridLayout grid={this.state.grid} />}
+          />
+        </div>
+      </div>
+    )
+  }
 }
 
-const rootElement = document.getElementById("root")
+const rootElement = document.getElementById('root')
 ReactDOM.render(<App />, rootElement)

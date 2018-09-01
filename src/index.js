@@ -80,21 +80,9 @@ class App extends Component {
   }
 
   changeGrid = ({ target: { value } }) => {
-    console.log(value)
-    switch (value) {
-      case '1':
-        this.setState({ rows: 30, cols: 50 })
-        break
-      case '2':
-        this.setState({ rows: 50, cols: 70 })
-        break
-      case '3':
-        this.setState({ rows: 70, cols: 100 })
-        break
-      default:
-        this.setState({ rows: 30, cols: 50 })
-        break
-    }
+    value === '1' && this.setState({ rows: 30, cols: 50 })
+    value === '2' && this.setState({ rows: 50, cols: 70 })
+    value === '3' && this.setState({ rows: 70, cols: 100 })
   }
 
   render() {
